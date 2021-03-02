@@ -21,7 +21,7 @@ def transforms1(image_size, w=3, zoom=1.1):
 
 class DoseCurveDataset(Dataset):
     def __init__(self, folder, image_size, chans=[0,1,2,3,4], train=True, norm_f=None,
-                 w=None, doses="all", label=False):
+                 w=None, doses="all", label=False, multiplier=1):
 
         if doses == "all":
             doses = dose2locs.keys()
@@ -47,7 +47,7 @@ class DoseCurveDataset(Dataset):
 
         #convert_image_fn = convert_transparent_to_rgb if not transparent else convert_rgb_to_transparent
         self.chans = chans 
-
+        self.multiplier = multiplier
         self.transform = transforms.Compose(transforms1(image_size, w))
         
 
@@ -63,7 +63,7 @@ class DoseCurveDataset(Dataset):
         if self.label:
             label = self.dose2id[loc2dose[str(path).split()[-2]]]
             return self.transform(self.f(img/255)), label
-        return self.transform(self.f(img/255))
+        return (self.transform(self.f(img/255)) * self.multiplier).clamp(0,1)
 
 
 class MSNorm:  
