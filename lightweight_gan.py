@@ -106,7 +106,8 @@ def hinge_loss(real, fake):
     return (F.relu(1 + real) + F.relu(1 - fake)).mean()
 
 
-def evaluate_in_chunks(max_batch_size, model, *args):
+def evaluate_in_chunks(max_batch_size, model, y=None, *args):
+    if y is not None: args.append(y)
     split_args = list(
         zip(*list(map(lambda x: x.split(max_batch_size, dim=0), args))))
     chunked_outputs = [model(*i) for i in split_args]
@@ -339,7 +340,7 @@ class FCANet(nn.Module):
 
 
 # generative adversarial network
-EMBEDDING_DIM = 128
+EMBEDDING_DIM = 16
 
 
 class InitConv(nn.Module):
@@ -376,6 +377,7 @@ class InitConv(nn.Module):
 
 class GenSeq(nn.Module):
     def __init__(self, chan_in, chan_out, num_classes=0):
+        raise NotImplementedError
         super().__init__()
         if num_classes > 0:
             self.norm = CategoricalConditionalBatchNorm2d(
@@ -391,6 +393,24 @@ class GenSeq(nn.Module):
         x = self.prenorm(x)
         x = self.norm(x) if y is None else self.norm(x, y)
         return self.postnorm(x)
+    
+    
+class Catter(nn.Module):
+    def __init__(self, feat_dim, embedding_dim, num_classes):
+        super().__init__()
+        self.embedding = nn.Embedding(num_classes, embedding_dim)
+        self.integrate = nn.Sequential(
+            nn.Conv2d(feat_dim+embedding_dim, feat_dim*2, 1),
+            norm_class(feat_dim * 2),
+            nn.GLU(dim=1)
+        )
+        
+    def forward(self, x, y=None):
+        im_width = x.shape[-1]
+        assert im_width == x.shape[-2], "is image a square?"
+        embedded = self.embedding(y)[:, :, None, None].repeat(1, 1, im_width, im_width,)
+        return self.integrate(torch.cat((x, embedded), 1))
+
 
 
 class Generator(nn.Module):
@@ -405,8 +425,11 @@ class Generator(nn.Module):
         attn_res_layers=[],
         freq_chan_attn=False,
         num_classes=0,
+        cat_res_layers=[],
+        embedding_dim=16,
     ):
         super().__init__()
+        assert num_classes > 0 or cat_res_layers == []
         resolution = log2(image_size)
         assert is_power_of_two(image_size), 'image size must be a power of 2'
 
@@ -421,7 +444,7 @@ class Generator(nn.Module):
         features = list(
             map(lambda n: (n,  2 ** (fmap_inverse_coef - n)), range(2, num_layers + 2)))
         features = list(map(lambda n: (n[0], min(n[1], fmap_max)), features))
-        features = list(map(lambda n: 3 if n[0] >= 8 else n[1], features))
+        features = list(map(lambda n: 3 if n[0] >= 8 else n[1], features))  # TODO: should it be num chans?
         features = [latent_dim, *features]
 
         in_out_features = list(zip(features[:-1], features[1:]))
@@ -436,13 +459,17 @@ class Generator(nn.Module):
         self.sle_map = dict(self.sle_map)
 
         self.num_layers_spatial_res = 1
-
         for (res, (chan_in, chan_out)) in zip(self.res_layers, in_out_features):
             image_width = 2 ** res
 
+            cat = Catter(chan_in, embedding_dim, num_classes) if image_width in cat_res_layers else None
+            if cat: print(f"image width of {image_width}")
+            
+            
             attn = None
             if image_width in attn_res_layers:
                 attn = Rezero(GSA(dim=chan_in, norm_queries=True))
+                
 
             sle = None
             if res in self.sle_map:
@@ -462,7 +489,14 @@ class Generator(nn.Module):
                     )
 
             layer = nn.ModuleList([
-                GenSeq(chan_in, chan_out, num_classes),
+                cat, 
+                nn.Sequential(
+                    upsample(),
+                    Blur(),
+                    nn.Conv2d(chan_in, chan_out * 2, 3, padding=1),
+                    norm_class(chan_out * 2),
+                    nn.GLU(dim=1)
+                ),
                 sle,
                 attn
             ])
@@ -478,11 +512,14 @@ class Generator(nn.Module):
         residuals = dict()
         if self.num_classes > 0 and y is None:
             y = torch.randint(self.num_classes, x.shape[:1], device="cuda")
-        for (res, (up, sle, attn)) in zip(self.res_layers, self.layers):
+        for (res, (cat, up, sle, attn)) in zip(self.res_layers, self.layers):
+            if exists(cat):
+                print(cat)
+                x = cat(x,y)
             if exists(attn):
                 x = attn(x) + x
 
-            x = up(x, y)
+            x = up(x)  #, y)
 
             if exists(sle):
                 out_res = self.sle_map[res]
@@ -661,8 +698,6 @@ class Discriminator(nn.Module):
                 nn.Embedding(num_classes, last_chan))
         self._initialize()
 
-        self.bn4decoder = nn.BatchNorm2d(
-            num_chans) if bn4decoder else nn.Identity()  # GLU enforces not affine
         self.projection_loss_scale = projection_loss_scale
 
     def _initialize(self):
@@ -707,7 +742,7 @@ class Discriminator(nn.Module):
 
         aux_loss = F.mse_loss(
             recon_img_8x8,
-            F.interpolate(self.bn4decoder(orig_img),
+            F.interpolate(orig_img,
                           size=recon_img_8x8.shape[2:])
         )
 
@@ -723,7 +758,7 @@ class Discriminator(nn.Module):
 
             aux_loss_16x16 = F.mse_loss(
                 recon_img_16x16,
-                F.interpolate(self.bn4decoder(img_part),
+                F.interpolate(img_part,
                               size=recon_img_16x16.shape[2:])
             )
 
@@ -751,7 +786,8 @@ class LightweightGAN(nn.Module):
         rank=0,
         ddp=False,
         num_classes=0,
-        projection_loss_scale=1
+        projection_loss_scale=1,
+        cat_res_layers=[]
     ):
         super().__init__()
         self.latent_dim = latent_dim
@@ -766,6 +802,7 @@ class LightweightGAN(nn.Module):
             attn_res_layers=attn_res_layers,
             freq_chan_attn=freq_chan_attn,
             num_classes=num_classes,
+            cat_res_layers=cat_res_layers
         )
 
         self.G = Generator(**G_kwargs)
@@ -872,6 +909,7 @@ class Trainer():
         num_classes=0,
         aux_loss_multi=0.04,
         projection_loss_scale=1,
+        cat_res_layers=[],
         *args,
         **kwargs
     ):
@@ -941,6 +979,7 @@ class Trainer():
         self.num_classes = num_classes
         self.aux_loss_multi = aux_loss_multi
         self.projection_loss_scale = projection_loss_scale
+        self.cat_res_layers = cat_res_layers
 
     @property
     def image_extension(self):
@@ -980,6 +1019,7 @@ class Trainer():
             rank=self.rank,
             num_classes=self.num_classes,
             projection_loss_scale=self.projection_loss_scale,
+            cat_res_layers=self.cat_res_layers,
             *args,
             **kwargs
         )
@@ -1166,8 +1206,8 @@ class Trainer():
         if any(torch.isnan(l) for l in (total_gen_loss, total_disc_loss)):
             print(
                 f'NaN detected for generator or discriminator. Loading from checkpoint #{self.checkpoint_num}')
-            self.load(self.checkpoint_num)
             raise NanException
+            self.load(self.checkpoint_num)
 
         del total_disc_loss
         del total_gen_loss
@@ -1281,8 +1321,8 @@ class Trainer():
                     generated_image, path, nrow=num_images)
 
     @torch.no_grad()
-    def generate_(self, G, style, num_image_tiles=8):
-        generated_images = evaluate_in_chunks(self.batch_size, G, style)
+    def generate_(self, G, style, y=None, num_image_tiles=8):
+        generated_images = evaluate_in_chunks(self.batch_size, G, y, style)
         return generated_images.clamp_(0., 1.)
 
     @torch.no_grad()
@@ -1373,6 +1413,7 @@ class Trainer():
 
         if print_version and 'version' in load_data and self.is_main:
             print(f"loading from version {load_data['version']}")
+            
 
         try:
             self.GAN.load_state_dict(load_data['GAN'])
