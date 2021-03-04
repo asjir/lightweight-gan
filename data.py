@@ -5,6 +5,7 @@ from random import random
 import torch
 from more_itertools import flatten
 from PIL.Image import BILINEAR
+from torch.functional import norm
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -41,14 +42,15 @@ class DoseCurveDataset(Dataset):
         self.folder = folder
         self.image_size = image_size
         self.label = label
-        self.norm_f = norm_f or identity()
+        
+        assert not norm_f or not multiplier
+        self.norm_f = norm_f or (lambda x: (x*multiplier/255).clamp(0, 1))
 
         self.paths = paths(folder, doses)
         assert len(self.paths) > 0, f'No images were found in {folder} for training'
 
         #convert_image_fn = convert_transparent_to_rgb if not transparent else convert_rgb_to_transparent
         self.chans = chans 
-        self.multiplier = multiplier
         self.transform = transforms.Compose(transforms1(image_size, w))
         
 
@@ -63,8 +65,8 @@ class DoseCurveDataset(Dataset):
         
         if self.label:
             label = self.dose2id[loc2dose[str(path).split()[-2]]]
-            return self.transform(self.f(img/255)), label
-        return (self.transform(self.f(img/255)) * self.multiplier).clamp(0,1)
+            return self.transform(self.f(img)), label
+        return (self.transform(self.f(img)))
 
 
 class MSNorm:  
