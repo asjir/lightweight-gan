@@ -27,9 +27,9 @@ from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 from tqdm import tqdm
 
-from .version import __version__
-from .bn import CategoricalConditionalBatchNorm2d
-from .diff_augment import DiffAugment
+from version import __version__
+from bn import CategoricalConditionalBatchNorm2d
+from diff_augment import DiffAugment
 
 
 # asserts
