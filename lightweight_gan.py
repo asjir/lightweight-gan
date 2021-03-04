@@ -1051,7 +1051,7 @@ class Trainer():
 
     def set_dataset(self, dataset, num_workers):
         self.dataset = dataset
-        dataloader = DataLoader(self.dataset, num_workers=num_workers, shuffle=True, seed=42,
+        dataloader = DataLoader(self.dataset, num_workers=num_workers, shuffle=True, 
                                 batch_size=self.batch_size, drop_last=True, pin_memory=True)
         self.loader = cycle(dataloader)
 
