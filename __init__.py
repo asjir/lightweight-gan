@@ -1,1 +1,3 @@
-from lightweight_gan.lightweight_gan import LightweightGAN, Generator, Discriminator, Trainer, NanException
+from .data import DoseCurveDataset
+from .lightweight_gan import (Discriminator, Generator, LightweightGAN,
+                              NanException, Trainer)

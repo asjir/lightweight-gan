@@ -1,4 +1,4 @@
-from statistics import mean 
+from statistics import mean
 
 import torch
 from matplotlib import pyplot as plt

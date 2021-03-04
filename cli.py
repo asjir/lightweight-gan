@@ -1,16 +1,16 @@
 import random
-from retry.api import retry_call
-from tqdm import tqdm
 from datetime import datetime
 from functools import wraps
-from lightweight_gan import Trainer, NanException
-from diff_augment_test import DiffAugmentTest
-
-import torch
-import torch.multiprocessing as mp
-import torch.distributed as dist
 
 import numpy as np
+import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+from retry.api import retry_call
+from tqdm import tqdm
+
+from diff_augment_test import DiffAugmentTest
+from lightweight_gan import NanException, Trainer
 
 
 def exists(val):

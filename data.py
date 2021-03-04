@@ -4,11 +4,12 @@ from random import random
 
 import torch
 from more_itertools import flatten
+from PIL.Image import BILINEAR
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from util import dose2locs, loc2dose, identity
-from PIL.Image import BILINEAR
+from .util import dose2locs, identity, loc2dose
+
 
 def transforms1(image_size, w=3, zoom=1.1):
     return [

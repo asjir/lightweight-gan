@@ -1,37 +1,34 @@
-import os
 import json
-import multiprocessing
-from random import random
 import math
-from math import log2, floor
+import multiprocessing
+import os
+from contextlib import ExitStack, contextmanager
 from functools import partial
-from contextlib import contextmanager, ExitStack
+from math import floor, log2
 from pathlib import Path
+from random import random
 from shutil import rmtree
 
 import torch
-from torch.cuda.amp import autocast, GradScaler
-from torch.optim import Adam
-from torch import nn, einsum
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
-from torch.autograd import grad as torch_grad
-from torch.utils.data.distributed import DistributedSampler
-from torch.nn.parallel import DistributedDataParallel as DDP
-
-from PIL import Image
 import torchvision
-from torchvision import transforms
+from adabelief_pytorch import AdaBelief
+from einops import rearrange, reduce
+from gsa_pytorch import GSA
 from kornia import filter2D
+from PIL import Image
+from torch import einsum, nn
+from torch.autograd import grad as torch_grad
+from torch.cuda.amp import GradScaler, autocast
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.optim import Adam
+from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.distributed import DistributedSampler
+from torchvision import transforms
+from tqdm import tqdm
 
 from diff_augment import DiffAugment
 from version import __version__
-
-from tqdm import tqdm
-from einops import rearrange, reduce
-
-from adabelief_pytorch import AdaBelief
-from gsa_pytorch import GSA
 
 # asserts
 
