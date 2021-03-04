@@ -9,7 +9,7 @@ from torch.functional import norm
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-from .util import dose2locs, identity, loc2dose
+from util import dose2locs, identity, loc2dose
 
 
 def transforms1(image_size, w=3, zoom=1.1):
