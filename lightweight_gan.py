@@ -461,7 +461,6 @@ class Generator(nn.Module):
             image_width = 2 ** res
 
             cat = Catter(chan_in, embedding_dim, num_classes) if image_width in cat_res_layers else None
-            if cat: print(f"image width of {image_width}")
             
             
             attn = None
@@ -512,7 +511,6 @@ class Generator(nn.Module):
             y = torch.randint(self.num_classes, x.shape[:1], device="cuda")
         for (res, (cat, up, sle, attn)) in zip(self.res_layers, self.layers):
             if exists(cat):
-                print(cat)
                 x = cat(x,y)
             if exists(attn):
                 x = attn(x) + x
