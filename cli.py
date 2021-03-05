@@ -98,6 +98,7 @@ def train_from_dataset(
     aux_loss_multi=1,
     projection_loss_scale=1,
     cat_res_layers=[],
+    shuffle=False,
 ):
     num_image_tiles = default(num_image_tiles, 4 if image_size > 512 else 8)
 
@@ -128,6 +129,7 @@ def train_from_dataset(
         aux_loss_multi=aux_loss_multi,
         projection_loss_scale=projection_loss_scale,
         cat_res_layers=cat_res_layers,
+        shuffle=shuffle,
     )
 
     if generate:

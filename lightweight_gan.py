@@ -908,6 +908,7 @@ class Trainer():
         aux_loss_multi=0.04,
         projection_loss_scale=1,
         cat_res_layers=[],
+        shuffle=False,
         *args,
         **kwargs
     ):
@@ -978,6 +979,7 @@ class Trainer():
         self.aux_loss_multi = aux_loss_multi
         self.projection_loss_scale = projection_loss_scale
         self.cat_res_layers = cat_res_layers
+        self.shuffle = shuffle
 
     @property
     def image_extension(self):
@@ -1051,7 +1053,7 @@ class Trainer():
 
     def set_dataset(self, dataset, num_workers):
         self.dataset = dataset
-        dataloader = DataLoader(self.dataset, num_workers=num_workers, shuffle=True, 
+        dataloader = DataLoader(self.dataset, num_workers=num_workers, shuffle=self.shuffle,
                                 batch_size=self.batch_size, drop_last=True, pin_memory=True)
         self.loader = cycle(dataloader)
 
