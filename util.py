@@ -116,7 +116,7 @@ class identity(object):
 
 def update(pbar, loss, acc, rms=None, beta=.99):
     loss = loss.item(); acc = acc.item()
-    if rms:
+    if not rms:
         rms = (loss, acc)
     else:
         rms = (loss * (1-beta) + beta * rms[0], acc * (1-beta) + beta * rms[1])
