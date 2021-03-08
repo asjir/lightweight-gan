@@ -113,3 +113,14 @@ def transfer_vis(transfer, batch_content, batch_style, ms):
 class identity(object):
     def __call__(self, tensor):
         return tensor
+
+def update(pbar, loss, acc, rms=None, beta=.99):
+    loss = loss.item(); acc = acc.item()
+    if rms:
+        rms = (loss, acc)
+    else:
+        rms = (loss * (1-beta) + beta * rms[0], acc * (1-beta) + beta * rms[1])
+    pbar.set_description(f"Loss {rms[0]:.4f}, acc: {rms[1]:.4f}")
+  
+def acc(y_hat, y):
+    return (y_hat.argmax(1) == y).float().mean()
