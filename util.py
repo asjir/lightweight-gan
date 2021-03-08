@@ -121,6 +121,7 @@ def update(pbar, loss, acc, rms=None, beta=.99):
     else:
         rms = (loss * (1-beta) + beta * rms[0], acc * (1-beta) + beta * rms[1])
     pbar.set_description(f"Loss {rms[0]:.4f}, acc: {rms[1]:.4f}")
+    return rms
   
 def acc(y_hat, y):
     return (y_hat.argmax(1) == y).float().mean()
