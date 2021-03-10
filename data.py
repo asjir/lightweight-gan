@@ -36,7 +36,7 @@ class DoseCurveDataset(Dataset):
                 f'**/*{assay}*.pt')) for assay in assays)
             return [p for p in gen if not_52.search(str(p))]
 
-        self.dose2id = {k: i for i, k in enumerate(doses)}
+        self.dose2id = {k: i for i, k in enumerate(sorted(doses))}
         self.f = d8 if train else identity()
         super().__init__()
         self.folder = folder
