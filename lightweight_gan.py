@@ -823,9 +823,9 @@ class LightweightGAN(nn.Module):
             self.D_opt = Adam(self.D.parameters(), lr=lr *
                               ttur_mult, betas=(0.5, 0.9))
         elif optimizer == "adabelief":
-            self.G_opt = AdaBelief(self.G.parameters(),
+            self.G_opt = AdaBelief(self.G.parameters(), print_change_log=False,
                                    lr=lr, betas=(0.5, 0.9))
-            self.D_opt = AdaBelief(self.D.parameters(),
+            self.D_opt = AdaBelief(self.D.parameters(), print_change_log=False,
                                    lr=lr * ttur_mult, betas=(0.5, 0.9))
         else:
             assert False, "No valid optimizer is given"
