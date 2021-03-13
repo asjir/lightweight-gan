@@ -12,18 +12,20 @@ from torchvision import transforms
 from util import dose2locs, identity, loc2dose
 
 
-def transforms1(image_size, w=3, zoom=1.1):
+def transforms1(image_size, w=3, zoom=1.1, erase_p=0):
     return [
         transforms.Resize(image_size),
         transforms.RandomAffine(w, (.01*w, .01*w), (1, 1), w, BILINEAR),
         transforms.Resize(int(image_size*zoom)), 
-        transforms.CenterCrop(image_size)   
+        transforms.CenterCrop(image_size)  , 
+        transforms.RandomErasing(p=erase_p, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0)
     ]
+    
 
 
 class DoseCurveDataset(Dataset):
     def __init__(self, folder, image_size, chans=[0,1,2,3,4], train=True, norm_f=None,
-                 w=None, doses="all", label=False, multiplier=1):
+                 w=None, doses="all", label=False, multiplier=1, erase_p=0):
 
         if doses == "all":
             doses = dose2locs.keys()
@@ -51,7 +53,7 @@ class DoseCurveDataset(Dataset):
 
         #convert_image_fn = convert_transparent_to_rgb if not transparent else convert_rgb_to_transparent
         self.chans = chans 
-        self.transform = transforms.Compose(transforms1(image_size, w))
+        self.transform = transforms.Compose(transforms1(image_size, w, erase_p=erase_p))
         
 
     def __len__(self):
