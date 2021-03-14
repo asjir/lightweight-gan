@@ -25,7 +25,7 @@ def transforms1(image_size, w=3, zoom=1.1, erase_p=0):
 
 class DoseCurveDataset(Dataset):
     def __init__(self, folder, image_size, chans=[0,1,2,3,4], train=True, norm_f=None,
-                 w=None, doses="all", label=False, multiplier=1, erase_p=0):
+                 w=None, doses="all", label=False, multiplier=None, erase_p=0):
 
         if doses == "all":
             doses = dose2locs.keys()
@@ -46,6 +46,7 @@ class DoseCurveDataset(Dataset):
         self.label = label
         
         assert not norm_f or not multiplier
+        if not norm_f and not multiplier: multiplier = 1
         self.norm_f = norm_f or (lambda x: (x*multiplier/255).clamp(0, 1))
 
         self.paths = paths(folder, doses)
