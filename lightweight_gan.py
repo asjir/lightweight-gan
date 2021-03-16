@@ -1241,13 +1241,13 @@ class Trainer():
 
         # regular
 
-        generated_images = self.generate_(self.GAN.G, latents)
+        generated_images = self.generate_(self.GAN.G, latents)[:,:3]
         torchvision.utils.save_image(generated_images, str(
             self.results_dir / self.name / f'{str(num)}.{ext}'), nrow=num_rows, padding=4, pad_value=1)
 
         # moving averages
 
-        generated_images = self.generate_(self.GAN.GE, latents)
+        generated_images = self.generate_(self.GAN.GE, latents)[:,:3]
         torchvision.utils.save_image(generated_images, str(
             self.results_dir / self.name / f'{str(num)}-ema.{ext}'), nrow=num_rows, padding=4, pad_value=1)
 
