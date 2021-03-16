@@ -101,7 +101,7 @@ def train_from_dataset(
     shuffle=False,
 ):
     num_image_tiles = default(num_image_tiles, 4 if image_size > 512 else 8)
-    print(num_chans)
+
     model_args = dict(
         name=name,
         results_dir=results_dir,
