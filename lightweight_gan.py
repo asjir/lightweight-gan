@@ -1020,6 +1020,7 @@ class Trainer():
             num_classes=self.num_classes,
             projection_loss_scale=self.projection_loss_scale,
             cat_res_layers=self.cat_res_layers,
+            num_chans=self.num_chans,
             *args,
             **kwargs
         )
