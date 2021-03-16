@@ -578,7 +578,6 @@ class Discriminator(nn.Module):
         bn4decoder=False,
         projection_loss_scale=1
     ):
-        print(num_chans)
         super().__init__()
         resolution = log2(image_size)
         assert is_power_of_two(image_size), 'image size must be a power of 2'
@@ -786,6 +785,8 @@ class LightweightGAN(nn.Module):
         projection_loss_scale=1,
         cat_res_layers=[]
     ):
+        print(num_chans)
+
         super().__init__()
         self.latent_dim = latent_dim
         self.image_size = image_size
