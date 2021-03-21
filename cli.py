@@ -10,7 +10,7 @@ from retry.api import retry_call
 from tqdm import tqdm
 
 from diff_augment_test import DiffAugmentTest
-from lightweight_gan import NanException, Trainer
+from lightweight_gan_ import NanException, Trainer
 
 
 def exists(val):
