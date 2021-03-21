@@ -371,11 +371,8 @@ class Generator(nn.Module):
         attn_res_layers=[],
         freq_chan_attn=False,
         num_classes=0,
-        cat_res_layers=[],
-        embedding_dim=16,
     ):
         super().__init__()
-        assert num_classes > 0 or cat_res_layers == []
         resolution = log2(image_size)
         assert is_power_of_two(image_size), 'image size must be a power of 2'
 
@@ -451,7 +448,7 @@ class Generator(nn.Module):
         residuals = dict()
         if self.num_classes > 0 and y is None:
             y = torch.randint(self.num_classes, x.shape[:1], device="cuda")
-        for (res, (cat, up, sle, attn)) in zip(self.res_layers, self.layers):
+        for (res, (up, sle, attn)) in zip(self.res_layers, self.layers):
             if exists(attn):
                 x = attn(x) + x
 
@@ -723,7 +720,6 @@ class LightweightGAN(nn.Module):
         ddp=False,
         num_classes=0,
         projection_loss_scale=1,
-        cat_res_layers=[]
     ):
         print(num_chans)
 
@@ -740,7 +736,6 @@ class LightweightGAN(nn.Module):
             attn_res_layers=attn_res_layers,
             freq_chan_attn=freq_chan_attn,
             num_classes=num_classes,
-            cat_res_layers=cat_res_layers
         )
 
         self.G = Generator(**G_kwargs)
