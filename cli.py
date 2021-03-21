@@ -128,7 +128,7 @@ def train_from_dataset(
         num_classes=num_classes,
         aux_loss_multi=aux_loss_multi,
         projection_loss_scale=projection_loss_scale,
-        cat_res_layers=cat_res_layers,
+        #cat_res_layers=cat_res_layers,
         shuffle=shuffle,
     )
 
