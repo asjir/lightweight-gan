@@ -440,15 +440,19 @@ class Generator(nn.Module):
 
         self.out_conv = nn.Conv2d(features[-1], init_channel, 3, padding=1)
 
-    def forward(self, x, y=None):
-        x = rearrange(x, 'b c -> b c () ()')
-        x = self.init_conv(x)  # HERE
-        x = F.normalize(x, dim=1)
+    def forward(self, x, y=None, start=0):
+        if start == 0:
+            x = rearrange(x, 'b c -> b c () ()')
+            x = self.init_conv(x)  # HERE
+            x = F.normalize(x, dim=1)
 
         residuals = dict()
         if self.num_classes > 0 and y is None:
             y = torch.randint(self.num_classes, x.shape[:1], device="cuda")
         for (res, (up, sle, attn)) in zip(self.res_layers, self.layers):
+            if start > 1:
+                start -= 1
+                continue
             if exists(attn):
                 x = attn(x) + x
 
