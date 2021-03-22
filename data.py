@@ -62,9 +62,9 @@ class DoseCurveDataset(Dataset):
 
     def __getitem__(self, index):
         path = self.paths[index]
-        img = self.norm_f(torch.load(path))
         
-        img = img[self.chans]
+        img = self.norm_f(torch.load(path)[self.chans])
+        
         
         if self.label:
             label = self.dose2id[loc2dose[str(path).split()[-2]]]
